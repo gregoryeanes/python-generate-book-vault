@@ -1,0 +1,188 @@
+# ---------------------------------------------------------------------------
+# Explicit ontology for the Iliad vault.
+#
+# This file is the single source of truth for:
+#   * which kinds of notes exist (node_types)
+#   * which relationship fields may appear in note frontmatter (relations)
+#   * which K-Plex compass direction each field maps to (role)
+#
+# K-Plex roles -> compass direction:
+#   parent      north  (origins, containers, causes)
+#   child       south  (parts, consequences, members)
+#   friend      west   (supporting / affiliative links)
+#   challenger  east   (opposing / transformative links)
+#   previous    west   (earlier in a sequence)
+#   next        east   (later in a sequence)
+#
+# The generator validates every edge in its data against this file and aborts
+# on unknown relations or domain/range violations.
+# ---------------------------------------------------------------------------
+
+vault:
+  name: Iliad Vault
+  write_inverse: true        # write the paired field on the target note too
+  type_property: type        # frontmatter key holding the note type
+  tag_property: tags         # K-Plex "Note Type" is tag-based; the type is also added here
+
+# Relationships the generator creates automatically from structure
+# (event order, book membership). Each value must name a relation below.
+generated:
+  event_to_book: part of
+  book_to_work: part of
+  event_chain: next event
+  book_chain: next book
+
+node_types:
+  Work:
+    folder: ""
+    icon: book-open
+    color: "#8b5a2b"
+    description: The poem as a whole; root of the book hierarchy.
+  Book:
+    folder: Books
+    icon: scroll
+    color: "#b08d57"
+    description: One of the 24 books (rhapsodies) of the Iliad.
+  Event:
+    folder: Plot Points
+    icon: swords
+    color: "#c0392b"
+    description: A plot point, ordered chronologically and causally.
+  Character:
+    folder: Characters
+    icon: user
+    color: "#2c6e9b"
+    description: A mortal or divine participant in the story.
+  Faction:
+    folder: Factions
+    icon: flag
+    color: "#6c3483"
+    description: An army, people, or divine collective.
+  Place:
+    folder: Places
+    icon: map-pin
+    color: "#1e8449"
+    description: A setting for plot events.
+
+relations:
+  # ---- Lineage ------------------------------------------------------------
+  father:
+    role: parent
+    inverse: children
+    inverse_role: child
+    domain: [Character]
+    range: [Character]
+    description: Biological father (north of the child).
+  mother:
+    role: parent
+    inverse: children
+    inverse_role: child
+    domain: [Character]
+    range: [Character]
+    description: Biological mother (north of the child).
+
+  # ---- Social structure ---------------------------------------------------
+  member of:
+    role: parent
+    inverse: members
+    inverse_role: child
+    domain: [Character, Faction]
+    range: [Faction]
+    description: Belongs to a faction or sub-faction (faction is north).
+  spouse of:
+    role: friend
+    symmetric: true
+    domain: [Character]
+    range: [Character]
+    description: Married partners.
+  companion of:
+    role: friend
+    symmetric: true
+    domain: [Character]
+    range: [Character]
+    description: Close companions in arms.
+  allied with:
+    role: friend
+    symmetric: true
+    domain: [Character]
+    range: [Character]
+    description: Allies or trusted fellows in the same cause.
+  war prize of:
+    role: friend
+    inverse: holds as prize
+    inverse_role: friend
+    domain: [Character]
+    range: [Character]
+    description: Captive woman awarded to a warrior as spoils.
+  protects:
+    role: friend
+    inverse: protected by
+    inverse_role: friend
+    domain: [Character]
+    range: [Character, Faction]
+    description: Divine or martial patronage.
+
+  # ---- Conflict -----------------------------------------------------------
+  enemy of:
+    role: challenger
+    symmetric: true
+    domain: [Character]
+    range: [Character]
+    description: Personal antagonists.
+  kills:
+    role: challenger
+    inverse: killed by
+    inverse_role: challenger
+    domain: [Character]
+    range: [Character]
+    description: Slays in combat.
+
+  # ---- Plot: causality (vertical) ----------------------------------------
+  caused by:
+    role: parent
+    inverse: causes
+    inverse_role: child
+    domain: [Event]
+    range: [Event]
+    description: Direct cause of this event (cause is north).
+
+  # ---- Plot: chronology (horizontal) -------------------------------------
+  next event:
+    role: next
+    inverse: previous event
+    inverse_role: previous
+    domain: [Event]
+    range: [Event]
+    description: The event that follows in narrative order.
+  next book:
+    role: next
+    inverse: previous book
+    inverse_role: previous
+    domain: [Book]
+    range: [Book]
+    description: The following book of the poem.
+
+  # ---- Structure ---------------------------------------------------------
+  part of:
+    role: parent
+    inverse: contains
+    inverse_role: child
+    domain: [Event, Book]
+    range: [Book, Work]
+    description: Event belongs to a book; a book belongs to the Iliad.
+
+  # ---- Plot: participation and setting -----------------------------------
+  participants:
+    role: friend
+    inverse: participates in
+    inverse_role: friend
+    domain: [Event]
+    range: [Character, Faction]
+    description: Who takes part in the event.
+  location:
+    role: friend
+    inverse: site of
+    inverse_role: friend
+    domain: [Event]
+    range: [Place]
+    description: Where the event takes place.
